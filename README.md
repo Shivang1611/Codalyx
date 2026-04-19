@@ -84,5 +84,4 @@ Contributions are welcome! Please open an issue or submit a PR for any features 
 ## 📄 License
 This project is licensed under the MIT License.
 
----
-Developed with ❤️ by [Shivang1611](https://github.com/Shivang1611)
+
