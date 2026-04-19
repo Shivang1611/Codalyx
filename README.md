@@ -1,4 +1,4 @@
-# ⚡ ECHOES: Modern Developer Performance Platform
+# Codalyx: Modern Developer Performance Platform
 
 **ECHOES** (formerly Codalyx) is a production-grade developer intelligence hub. It consolidates metrics from multiple coding platforms—GitHub, LeetCode, Codeforces, CodeChef, and AtCoder—into a single, high-fidelity dashboard. Equipped with an AI Performance Coach powered by Google Gemini, ECHOES helps developers visualize their growth, track contest streaks, and master conceptual weaknesses.
 
