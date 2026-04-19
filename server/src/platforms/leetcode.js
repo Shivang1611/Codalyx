@@ -1,0 +1,145 @@
+// LeetCode has no official public API.
+// Uses public GraphQL endpoint — server-side only.
+
+const LEETCODE_GRAPHQL = 'https://leetcode.com/graphql'
+
+const QUERY = `
+  query getUserProfile($username: String!) {
+    allQuestionsCount {
+      difficulty
+      count
+    }
+    matchedUser(username: $username) {
+      username
+      submitStats: submitStatsGlobal {
+        acSubmissionNum { difficulty count submissions }
+      }
+      userCalendar {
+        streak
+        totalActiveDays
+      }
+      tagProblemCounts {
+        advanced      { tagName problemsSolved }
+        intermediate  { tagName problemsSolved }
+        fundamental   { tagName problemsSolved }
+      }
+    }
+    recentSubmissionList(username: $username, limit: 50) {
+      title
+      titleSlug
+      timestamp
+      statusDisplay
+      lang
+    }
+  }
+`
+
+export async function fetchLeetCodeStats(username) {
+  try {
+    const res = await fetch(LEETCODE_GRAPHQL, {
+      method:  'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      },
+      body:    JSON.stringify({ query: QUERY, variables: { username } }),
+    })
+    
+    if (!res.ok) throw new Error('LeetCode fetch failed status: ' + res.status)
+    
+    const data = await res.json()
+    if (!data.data?.matchedUser) throw new Error('LeetCode user not found')
+
+    const user  = data.data.matchedUser
+    const stats = user.submitStats.acSubmissionNum
+    const totals = data.data.allQuestionsCount
+    console.log('[LEETCODE RAW STATS]:', JSON.stringify({ stats, totals }))
+    
+    // Total solved is 'count' in 'All' difficulty
+    const solved = stats?.find(s => s.difficulty.toUpperCase() === 'ALL')?.count || 0
+    const easySolved = stats?.find(s => s.difficulty.toUpperCase() === 'EASY')?.count || 0
+    const mediumSolved = stats?.find(s => s.difficulty.toUpperCase() === 'MEDIUM')?.count || 0
+    const hardSolved = stats?.find(s => s.difficulty.toUpperCase() === 'HARD')?.count || 0
+    
+    const platformTotal = totals?.find(t => t.difficulty.toUpperCase() === 'ALL')?.count || 3907
+    const easyTotal = totals?.find(t => t.difficulty.toUpperCase() === 'EASY')?.count || 1000
+    const mediumTotal = totals?.find(t => t.difficulty.toUpperCase() === 'MEDIUM')?.count || 2000
+    const hardTotal = totals?.find(t => t.difficulty.toUpperCase() === 'HARD')?.count || 900
+
+    // Build topic areas from ALL tag data
+    const allTags = [
+      ...(user.tagProblemCounts?.advanced || []),
+      ...(user.tagProblemCounts?.intermediate || []),
+      ...(user.tagProblemCounts?.fundamental || []),
+    ].filter(t => t.problemsSolved > 0)
+
+    const mapTag = t => ({
+      topic:    t.tagName,
+      attempts: t.problemsSolved,
+      accuracy: Math.min(Math.round((t.problemsSolved / 50) * 100), 100),
+      priority: t.problemsSolved < 5 ? 'critical' : t.problemsSolved < 15 ? 'high' : 'medium',
+    })
+
+    const sortedAsc  = [...allTags].sort((a, b) => a.problemsSolved - b.problemsSolved)
+    const sortedDesc = [...allTags].sort((a, b) => b.problemsSolved - a.problemsSolved)
+    const splitCount = Math.max(5, Math.floor(allTags.length * 0.25))
+
+    const weakTopics   = sortedAsc.slice(0, Math.min(splitCount, 5))
+    const strongTopics = sortedDesc.slice(0, Math.min(splitCount, 5))
+    const weakSet = new Set(weakTopics.map(t => t.tagName))
+    const filteredStrongTopics = strongTopics.filter(t => !weakSet.has(t.tagName))
+
+    const weakAreas   = weakTopics.map(mapTag)
+    const strongAreas = filteredStrongTopics.length > 0
+      ? filteredStrongTopics.map(mapTag)
+      : sortedDesc.slice(0, 5).map(mapTag)
+
+    const recentSubmissionsMap = new Map();
+    if (data.data.recentSubmissionList) {
+      data.data.recentSubmissionList.forEach(sub => {
+        if (!recentSubmissionsMap.has(sub.titleSlug)) {
+          recentSubmissionsMap.set(sub.titleSlug, {
+            id: sub.titleSlug,
+            title: sub.title,
+            difficulty: 'Medium',
+            topic: 'General',
+            attempts: 0,
+            accepted: 0,
+            timestamp: new Date(sub.timestamp * 1000)
+          });
+        }
+        const p = recentSubmissionsMap.get(sub.titleSlug);
+        p.attempts++;
+        if (sub.statusDisplay === 'Accepted') p.accepted++;
+        p.timestamp = new Date(Math.max(p.timestamp.getTime(), sub.timestamp * 1000));
+      });
+    }
+
+    const recentSubmissions = Array.from(recentSubmissionsMap.values())
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .map(p => ({
+        ...p,
+        accuracy: p.attempts > 0 ? Math.round((p.accepted / p.attempts) * 100) : 0,
+        status: p.accepted > 0 ? 'Accepted' : 'Rejected'
+      }));
+
+    return {
+      totalQuestions:  platformTotal,
+      solvedQuestions: solved,
+      easySolved,
+      mediumSolved,
+      hardSolved,
+      easyTotal,
+      mediumTotal,
+      hardTotal,
+      accuracy:        solved > 0 ? Math.min(Math.round((solved / 500) * 100), 100) : 0,
+      streak:          user.userCalendar?.streak || 0,
+      weakAreas,
+      strongAreas,
+      recentSubmissions,
+    }
+  } catch (err) {
+    console.error('LeetCode integration error:', err)
+    throw err
+  }
+}

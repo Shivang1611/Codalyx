@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Codalyx Quick-Add",
+  "version": "1.0",
+  "description": "Log LeetCode problems to Codalyx instantly as you solve them.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "*://leetcode.com/*",
+    "http://localhost:5000/*",
+    "http://localhost:5174/*"
+  ],
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_title": "Log Problem to Codalyx"
+  }
+}

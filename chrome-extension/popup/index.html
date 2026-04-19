@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Codalyx Quick-Add</div>
+  </div>
+  <div id="content" class="container">
+    <div id="error" class="hidden error-msg"></div>
+    <div id="success" class="hidden success-msg">Logged to Codalyx Profile!</div>
+    
+    <div class="form-group">
+      <label>Problem Title</label>
+      <input type="text" id="problemTitle" placeholder="e.g. Two Sum">
+    </div>
+    
+    <div class="form-row">
+      <div class="form-group half-width">
+        <label>Time Spent (m)</label>
+        <input type="number" id="timeSpent" placeholder="30" min="1" max="500">
+      </div>
+      <div class="form-group half-width">
+         <label>Difficulty</label>
+         <select id="difficulty">
+            <option value="Easy">Easy</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="Hard">Hard</option>
+         </select>
+      </div>
+    </div>
+    
+    <div class="form-row">
+      <div class="form-group half-width">
+        <label>Language</label>
+        <input type="text" id="language" placeholder="e.g. C++">
+      </div>
+      <div class="form-group half-width">
+         <label>Attempts</label>
+         <input type="number" id="attempts" placeholder="1" min="1" max="100" value="1">
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label>Tags (Comma separated)</label>
+      <input type="text" id="tags" placeholder="e.g. Array, Sliding Window">
+    </div>
+
+    <div class="form-group">
+      <label>Approach / Notes (Optional)</label>
+      <textarea id="approach" rows="3" placeholder="Brief explanation of your approach..."></textarea>
+    </div>
+
+    <button id="saveBtn" class="btn">Log to Dashboard</button>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

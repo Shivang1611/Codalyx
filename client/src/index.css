@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+:root[data-theme="dark"] {
+  /* Backgrounds — true black depth, not navy */
+  --bg-base:        #0a0a0a;
+  --bg-surface:     #111111;
+  --bg-card:        #161616;
+  --bg-hover:       #1e1e1e;
+  --border:         #2a2a2a;
+  --border-subtle:  #1f1f1f;
+
+  /* Text — crisp white hierarchy */
+  --text-primary:   #f2f2f2;
+  --text-secondary: #888888;
+  --text-muted:     #444444;
+  --text-disabled:  #2e2e2e;
+
+  /* Accent — vivid teal/cyan that pops on black */
+  --cyan:           #2dd4bf;
+  --cyan-glow:      rgba(45, 212, 191, 0.18);
+  --cyan-dark:      #0f9b8e;
+
+  /* Other accents */
+  --purple:         #a78bfa;
+  --purple-glow:    rgba(167, 139, 250, 0.15);
+  --green:          #34d399;
+  --orange:         #fbbf24;
+  --red:            #f87171;
+
+  /* Shadows */
+  --shadow-card:    0 4px 32px rgba(0, 0, 0, 0.6);
+  --shadow-glow:    0 0 24px rgba(45, 212, 191, 0.15);
+}
+
+:root[data-theme="light"] {
+  --bg-base:        #f5f7ff;
+  --bg-surface:     #ffffff;
+  --bg-card:        #ffffff;
+  --bg-hover:       #eef1ff;
+  --border:         #dde2f0;
+  --border-subtle:  #eaeef8;
+  --text-primary:   #0a0e27;
+  --text-secondary: #4a5578;
+  --text-muted:     #8892a8;
+  --cyan:           #0099bb;
+  --cyan-glow:      rgba(0, 153, 187, 0.1);
+  --cyan-dark:      #007799;
+  --purple:         #6246ea;
+  --purple-glow:    rgba(98, 70, 234, 0.1);
+  --green:          #00994d;
+  --orange:         #cc8800;
+  --red:            #cc2233;
+  --shadow-card:    0 4px 24px rgba(0, 0, 0, 0.08);
+  --shadow-glow:    0 0 20px rgba(0, 153, 187, 0.12);
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  transition: background-color 200ms, color 200ms;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+* {
+  transition: background-color 200ms, border-color 200ms;
+}
+
+/* Focus rings */
+*:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0%   { background-position: -200% 0 }
+  100% { background-position:  200% 0 }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-card) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-card) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+
+/* Login background animations */
+@keyframes meshShift {
+  0%   { background-position: 0% 50% }
+  50%  { background-position: 100% 50% }
+  100% { background-position: 0% 50% }
+}
+
+.login-bg-dark {
+  background: linear-gradient(
+    135deg, #0a0a0a 0%, #111111 40%, #0a0a0a 70%, #0d1117 100%
+  );
+  background-size: 400% 400%;
+  animation: meshShift 15s ease alternate infinite;
+}
+
+.login-bg-light {
+  background-color: #f5f7ff;
+  background-image: 
+    linear-gradient(45deg, #eef1ff 25%, transparent 25%), 
+    linear-gradient(-45deg, #eef1ff 25%, transparent 25%), 
+    linear-gradient(45deg, transparent 75%, #eef1ff 75%), 
+    linear-gradient(-45deg, transparent 75%, #eef1ff 75%);
+  background-size: 40px 40px;
+  background-position: 0 0, 0 20px, 20px -20px, -20px 0px;
+}
