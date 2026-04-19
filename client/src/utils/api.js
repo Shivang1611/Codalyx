@@ -1,7 +1,17 @@
 import axios from 'axios'
 
+const getBaseURL = () => {
+  const envUrl = import.meta.env.VITE_API_URL
+  if (envUrl && envUrl.includes('onrender.com')) return envUrl
+  
+  if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')) {
+    return 'https://codalyx.onrender.com/api'
+  }
+  return envUrl || 'http://localhost:4000/api'
+}
+
 const api = axios.create({ 
-  baseURL: import.meta.env.VITE_API_URL || '/api', 
+  baseURL: getBaseURL(), 
   withCredentials: true 
 })
 

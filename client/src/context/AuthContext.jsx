@@ -58,15 +58,28 @@ export function AuthProvider({ children }) {
 
 
   function loginWithGoogle() {
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
-    const cleanBase = baseUrl.replace(/\/api$/, '') // Remove /api suffix for passport redirect
-    window.location.href = `${cleanBase}/api/auth/google`
+    const envUrl = import.meta.env.VITE_API_URL
+    const isProd = !window.location.hostname.includes('localhost')
+    
+    // If we have an ENV URL and it's production, or we are on prod hostname
+    let target = isProd ? 'https://codalyx.onrender.com' : 'http://localhost:4000'
+    if (envUrl && envUrl.includes('onrender.com')) {
+      target = envUrl.replace(/\/api$/, '')
+    }
+    
+    window.location.href = `${target}/api/auth/google`
   }
 
   function loginWithGitHub() {
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
-    const cleanBase = baseUrl.replace(/\/api$/, '') // Remove /api suffix for passport redirect
-    window.location.href = `${cleanBase}/api/auth/github`
+    const envUrl = import.meta.env.VITE_API_URL
+    const isProd = !window.location.hostname.includes('localhost')
+    
+    let target = isProd ? 'https://codalyx.onrender.com' : 'http://localhost:4000'
+    if (envUrl && envUrl.includes('onrender.com')) {
+      target = envUrl.replace(/\/api$/, '')
+    }
+    
+    window.location.href = `${target}/api/auth/github`
   }
 
   async function logout() {
