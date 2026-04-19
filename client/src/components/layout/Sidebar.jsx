@@ -87,10 +87,10 @@ export default function Sidebar({ isOpen, setIsOpen }) {
         </div>
       </div>
 
-      <div className="p-6 group relative">
-        <div className="flex items-center gap-3 cursor-pointer">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900 border border-zinc-700 flex items-center justify-center text-white font-bold text-sm shadow-inner">
-            {user.image ? <img src={user.image} className="w-full h-full rounded-full object-cover" alt="" /> : <User size={18} />}
+      <div className="p-4 border-t border-[var(--border)] space-y-1">
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--cyan)] to-blue-500 border-2 border-[var(--cyan)]/30 flex items-center justify-center text-white font-bold text-sm shadow shrink-0">
+            {user.image ? <img src={user.image} className="w-full h-full rounded-full object-cover" alt="" /> : <User size={16} />}
           </div>
           <div className="flex-1 overflow-hidden">
             <div className="text-xs font-bold text-[var(--text-primary)] leading-none truncate">{user.name}</div>
@@ -98,24 +98,21 @@ export default function Sidebar({ isOpen, setIsOpen }) {
           </div>
         </div>
 
-        {/* Floating Logout Menu on Hover */}
-        <div className="absolute bottom-[80px] left-6 w-[210px] bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all p-2 z-[60]">
-           <Link 
-            to="/profile"
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-hover)] transition-colors text-sm font-bold border border-transparent"
-          >
-            <User size={16} />
-            My Profile DNA
-          </Link>
-          <div className="h-[1px] bg-[var(--border)] my-1 mx-2" />
-           <button 
-            onClick={logout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-400/10 transition-colors text-sm font-bold"
-          >
-            <LogOut size={16} />
-            Logout Session
-          </button>
-        </div>
+        <Link
+          to="/profile"
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors text-sm font-semibold"
+        >
+          <User size={16} className="opacity-70" />
+          My Profile DNA
+        </Link>
+
+        <button
+          onClick={logout}
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-red-500 hover:bg-red-500/10 transition-colors text-sm font-semibold"
+        >
+          <LogOut size={16} />
+          Logout Session
+        </button>
       </div>
     </aside>
   )

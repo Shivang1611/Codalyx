@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bot, X, Send, Sparkles, Terminal, Zap, RotateCcw } from 'lucide-react'
+import { Bot, X, Send, Sparkles, Terminal, Zap, RotateCcw, WifiOff, Clock } from 'lucide-react'
 import api from '../../utils/api.js'
 import { toast } from 'sonner'
 
@@ -9,18 +9,38 @@ export default function CoachAI() {
   const [query, setQuery] = useState('')
   const [response, setResponse] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState(null)   // null | 'rate_limit' | 'network'
+  const [countdown, setCountdown] = useState(0)
+  const countdownRef = useRef(null)
+
+  // Live countdown timer
+  const startCountdown = (seconds) => {
+    setCountdown(seconds)
+    clearInterval(countdownRef.current)
+    countdownRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) { clearInterval(countdownRef.current); return 0; }
+        return prev - 1
+      })
+    }, 1000)
+  }
+
+  useEffect(() => () => clearInterval(countdownRef.current), [])
 
   const handleAsk = async () => {
-    if (!query.trim()) return toast.error('Please ask a coding question first')
+    if (!query.trim()) return toast.error('Please enter a coding question first')
+    if (countdown > 0) return toast.warning(`Please wait ${countdown}s before retrying`)
     setIsLoading(true)
     setResponse('')
     setError(null)
     try {
       const res = await api.post('/ai/review', { code: '', context: query })
       const text = res.data.review || ''
-      if (text.includes('Neural Link Interrupted') || text.includes('Fallback Mode')) {
+      if (text.includes('RATE_LIMIT_ERROR')) {
         setError('rate_limit')
+        startCountdown(65)
+      } else if (text.includes('NETWORK_ERROR')) {
+        setError('network')
       } else {
         setResponse(text)
       }
@@ -38,7 +58,7 @@ export default function CoachAI() {
 
   return (
     <>
-      {/* Floating Trigger Button */}
+      {/* Floating Trigger */}
       <motion.button
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
@@ -51,16 +71,12 @@ export default function CoachAI() {
       <AnimatePresence>
         {isOpen && (
           <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center sm:p-4">
-            {/* Backdrop */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
 
-            {/* Modal */}
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -88,70 +104,88 @@ export default function CoachAI() {
               </div>
 
               {/* Body */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
-
-                {/* Input area */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                {/* Input */}
                 <div className="space-y-3">
                   <label className="flex items-center gap-2 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">
-                    <Terminal size={11} />
-                    Ask anything about code
+                    <Terminal size={11} /> Ask anything about code
                   </label>
                   <textarea
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="e.g. How does Merge Sort work? / Explain time complexity of BFS... (⌘+Enter to send)"
-                    rows={5}
+                    rows={4}
                     className="w-full bg-[var(--bg-hover)] border border-[var(--border)] rounded-2xl px-5 py-4 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--cyan)] transition-all resize-none leading-relaxed"
                   />
                   <button
                     onClick={handleAsk}
-                    disabled={isLoading}
-                    className="w-full bg-[var(--cyan)] hover:brightness-110 disabled:opacity-50 text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg shadow-[var(--cyan-glow)]"
+                    disabled={isLoading || countdown > 0}
+                    className="w-full bg-[var(--cyan)] hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg shadow-[var(--cyan-glow)]"
                   >
                     {isLoading ? (
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : countdown > 0 ? (
+                      <><Clock size={14} /> Ready in {countdown}s</>
                     ) : (
-                      <>
-                        <Send size={14} />
-                        Ask CoachAI
-                      </>
+                      <><Send size={14} /> Ask CoachAI</>
                     )}
                   </button>
                 </div>
 
-                {/* Response */}
+                {/* Loading dots */}
                 {isLoading && (
-                  <div className="flex items-center gap-3 py-2">
+                  <div className="flex items-center gap-3 py-1">
                     <div className="flex gap-1">
                       {[0, 0.15, 0.3].map((delay, i) => (
                         <div key={i} className="w-2 h-2 rounded-full bg-[var(--cyan)] animate-bounce" style={{ animationDelay: `${delay}s` }} />
                       ))}
                     </div>
-                    <span className="text-xs text-[var(--text-muted)] font-medium">CoachAI is thinking...</span>
+                    <span className="text-xs text-[var(--text-muted)] font-medium">CoachAI is thinking…</span>
                   </div>
                 )}
 
+                {/* Error state */}
                 {error && !isLoading && (
                   <div className="bg-[var(--bg-hover)] border border-[var(--border)] rounded-2xl p-5 space-y-3">
-                    <div className="flex items-center gap-2 text-[var(--orange)] text-sm font-bold">
-                      <span>⚠️</span>
-                      {error === 'rate_limit' ? 'Rate limit reached — try again in 30s' : 'Network error — check your connection'}
-                    </div>
-                    <button
-                      onClick={handleAsk}
-                      className="flex items-center gap-2 text-xs text-[var(--cyan)] font-bold hover:underline"
-                    >
-                      <RotateCcw size={12} /> Retry
-                    </button>
+                    {error === 'rate_limit' ? (
+                      <>
+                        <div className="flex items-center gap-2 text-amber-500 text-sm font-bold">
+                          <Clock size={15} />
+                          {countdown > 0
+                            ? `AI quota window — ready in ${countdown}s`
+                            : 'Ready to retry!'}
+                        </div>
+                        <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                          CoachAI automatically tried 3 different AI models — all are at capacity right now. This is a Gemini free-tier limit. Wait for the timer, then retry.
+                        </p>
+                        <button
+                          onClick={handleAsk}
+                          disabled={countdown > 0}
+                          className="flex items-center gap-2 text-xs text-[var(--cyan)] font-bold hover:underline disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <RotateCcw size={12} /> {countdown > 0 ? `Retry in ${countdown}s` : 'Retry now'}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2 text-red-400 text-sm font-bold">
+                          <WifiOff size={15} /> Connection error
+                        </div>
+                        <p className="text-xs text-[var(--text-muted)]">Check your internet connection and try again.</p>
+                        <button onClick={handleAsk} className="flex items-center gap-2 text-xs text-[var(--cyan)] font-bold hover:underline">
+                          <RotateCcw size={12} /> Retry
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
 
+                {/* Response */}
                 {response && !isLoading && !error && (
                   <div className="border-t border-[var(--border)] pt-5 space-y-4">
                     <div className="flex items-center gap-2 text-[10px] font-black text-[var(--cyan)] uppercase tracking-widest">
-                      <Sparkles size={11} />
-                      AI Response
+                      <Sparkles size={11} /> AI Response
                     </div>
                     <div
                       className="bg-[var(--bg-hover)] border border-[var(--border)] rounded-2xl p-5 text-sm text-[var(--text-primary)] leading-relaxed"
@@ -159,7 +193,6 @@ export default function CoachAI() {
                     />
                   </div>
                 )}
-
               </div>
             </motion.div>
           </div>

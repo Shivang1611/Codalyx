@@ -1,8 +1,8 @@
-# Codalyx: Modern Developer Performance Platform
+# Codalyx: AI-Powered Developer Performance Hub
 
-**ECHOES** (formerly Codalyx) is a production-grade developer intelligence hub. It consolidates metrics from multiple coding platforms—GitHub, LeetCode, Codeforces, CodeChef, and AtCoder—into a single, high-fidelity dashboard. Equipped with an AI Performance Coach powered by Google Gemini, ECHOES helps developers visualize their growth, track contest streaks, and master conceptual weaknesses.
+**Codalyx** is a production-grade developer intelligence platform. It consolidates metrics from multiple coding platforms—GitHub, LeetCode, Codeforces, CodeChef, and AtCoder—into a single, high-fidelity dashboard. Equipped with an AI Performance Coach powered by Google Gemini (with persistent intelligence caching), Codalyx helps developers visualize their growth, track contest streaks, and master conceptual weaknesses.
 
-![ECHOES Dashboard Banner](https://via.placeholder.com/1200x400.png?text=ECHOES+DEVELOPER+PLATFORM)
+![Codalyx Dashboard Banner](https://via.placeholder.com/1200x400.png?text=Codalyx+DEVELOPER+PLATFORM)
 
 ---
 
@@ -24,7 +24,7 @@
 - **Revision Tracker**: Specialized queue for problems requiring spaced repetition.
 
 ### 4. Chrome Extension
-- Seamlessly bridge the gap between coding platforms and your ECHOES dashboard.
+- Seamlessly bridge the gap between coding platforms and your Codalyx dashboard.
 
 ---
 

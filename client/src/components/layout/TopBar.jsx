@@ -1,18 +1,42 @@
-import { User, LogOut, Sun, Moon, Search, Menu, X, Zap } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { User, LogOut, Sun, Moon, Menu, Zap } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useTheme } from '../../context/ThemeContext.jsx'
 
 export default function TopBar({ onMenuClick, isSidebarOpen }) {
   const { user, logout } = useAuth()
   const { theme, toggle } = useTheme()
+  const location = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  // Close on outside click / touch
+  useEffect(() => {
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    document.addEventListener('touchstart', handler)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      document.removeEventListener('touchstart', handler)
+    }
+  }, [])
+
+  // Close on route change
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [location.pathname])
 
   if (!user) return null
 
   return (
     <header className="h-16 border-b border-[var(--border)] bg-[var(--bg-card)]/80 backdrop-blur-md sticky top-0 z-[30] px-4 md:px-6 flex items-center justify-between">
 
-      {/* Left: Hamburger + Codalyx logo (shown only when sidebar is collapsed) */}
+      {/* Left: Hamburger + Logo */}
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
@@ -26,7 +50,7 @@ export default function TopBar({ onMenuClick, isSidebarOpen }) {
           </div>
         </button>
 
-        {/* Logo — only visible when sidebar is hidden */}
+        {/* Logo — visible when sidebar is hidden */}
         <div className={`flex items-center gap-2 transition-all duration-300 overflow-hidden ${isSidebarOpen ? 'opacity-0 w-0 pointer-events-none' : 'opacity-100 w-auto'}`}>
           <div className="w-7 h-7 bg-[var(--cyan)] rounded-lg flex items-center justify-center shadow-md shadow-[var(--cyan-glow)] shrink-0">
             <Zap size={15} className="text-white" strokeWidth={2.5} />
@@ -35,15 +59,11 @@ export default function TopBar({ onMenuClick, isSidebarOpen }) {
         </div>
       </div>
 
-      {/* Right side actions */}
-      <div className="flex items-center gap-5">
-        <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-1.5 rounded-lg hover:bg-[var(--bg-hover)]">
-          <Search size={18} />
-        </button>
-
+      {/* Right: Theme toggle + Avatar */}
+      <div className="flex items-center gap-3">
         <button
           onClick={toggle}
-          className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-1.5 rounded-lg hover:bg-[var(--bg-hover)]"
+          className="p-2 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all"
           title="Toggle theme"
         >
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -51,23 +71,34 @@ export default function TopBar({ onMenuClick, isSidebarOpen }) {
 
         <div className="h-6 w-[1px] bg-[var(--border)]" />
 
-        {/* User profile */}
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:block text-right">
-            <div className="text-xs font-bold text-[var(--text-primary)] leading-none">{user.name}</div>
-            <div className="text-[10px] text-[var(--cyan)] font-bold uppercase tracking-tighter mt-1">Prime Member</div>
-          </div>
+        {/* User info — name hidden on mobile */}
+        <div className="hidden sm:block text-right">
+          <div className="text-xs font-bold text-[var(--text-primary)] leading-none">{user.name}</div>
+          <div className="text-[10px] text-[var(--cyan)] font-bold uppercase tracking-tighter mt-1">Prime Member</div>
+        </div>
 
-          <div className="relative group">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--cyan)] to-blue-500 border-2 border-[var(--cyan)]/30 flex items-center justify-center text-white font-bold text-sm shadow cursor-pointer hover:scale-105 transition-transform">
-              {user.image
-                ? <img src={user.image} className="w-full h-full rounded-full object-cover" alt="" />
-                : <User size={16} />
-              }
-            </div>
+        {/* Avatar — click-based dropdown, works on mobile */}
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen(prev => !prev)}
+            className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--cyan)] to-blue-500 border-2 border-[var(--cyan)]/30 flex items-center justify-center text-white font-bold text-sm shadow hover:scale-105 active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-[var(--cyan)]/50"
+            aria-label="Profile menu"
+            aria-expanded={menuOpen}
+          >
+            {user.image
+              ? <img src={user.image} className="w-full h-full rounded-full object-cover" alt={user.name} />
+              : <User size={16} />
+            }
+          </button>
 
-            {/* Dropdown */}
-            <div className="absolute right-0 mt-2 w-48 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 p-2 z-[60]">
+          {menuOpen && (
+            <div className="absolute right-0 top-[calc(100%+8px)] w-52 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-2xl shadow-black/10 p-2 z-[60]">
+              {/* User info header */}
+              <div className="px-4 py-3 border-b border-[var(--border)] mb-1">
+                <p className="text-xs font-bold text-[var(--text-primary)] truncate">{user.name}</p>
+                <p className="text-[10px] text-[var(--text-muted)] truncate mt-0.5">{user.email}</p>
+              </div>
+
               <Link
                 to="/profile"
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors text-sm font-bold"
@@ -75,16 +106,18 @@ export default function TopBar({ onMenuClick, isSidebarOpen }) {
                 <User size={16} />
                 My Profile DNA
               </Link>
+
               <div className="h-[1px] bg-[var(--border)] my-1 mx-2" />
+
               <button
-                onClick={logout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-400/10 transition-colors text-sm font-bold"
+                onClick={() => { setMenuOpen(false); logout() }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-colors text-sm font-bold"
               >
                 <LogOut size={16} />
                 Logout Session
               </button>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </header>

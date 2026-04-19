@@ -1,7 +1,30 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import fs from 'fs';
+import path from 'path';
 
 let genAI = null;
-const reportCache = new Map();
+const CACHE_FILE = path.join(process.cwd(), 'ai_cache.json');
+let reportCache = new Map();
+
+// Initialize cache from file
+try {
+  if (fs.existsSync(CACHE_FILE)) {
+    const data = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
+    reportCache = new Map(Object.entries(data));
+    console.log(`[AI Cache] Loaded ${reportCache.size} items from persistent storage.`);
+  }
+} catch (err) {
+  console.error('[AI Cache] Failed to load cache file:', err.message);
+}
+
+const saveCache = () => {
+  try {
+    const data = Object.fromEntries(reportCache);
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error('[AI Cache] Failed to save cache:', err.message);
+  }
+};
 
 const getGenAI = () => {
   if (!genAI) {
@@ -14,37 +37,72 @@ const getGenAI = () => {
   return genAI;
 };
 
-export async function reviewCode(code, context = "") {
+// Helper: sleep for ms milliseconds
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Model fallback chain — each model has a separate quota pool on the same API key
+const MODEL_CHAIN = [
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b',
+];
+
+export async function reviewCode(code, context = "", modelIndex = 0) {
+  const cacheKey = `coach-${Buffer.from(context + (code || '')).toString('base64').substring(0, 100)}`;
+  if (reportCache.has(cacheKey)) {
+    console.log('[CoachAI] Returning cached response');
+    return reportCache.get(cacheKey);
+  }
+
+  const modelName = MODEL_CHAIN[modelIndex] || MODEL_CHAIN[MODEL_CHAIN.length - 1];
+  
   try {
     const ai = getGenAI();
-    const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = ai.getGenerativeModel({ model: modelName });
 
-    const prompt = `
-      You are the "Codalyx Principal Architect".
-      Context/Question: ${context}
-      ${code ? `Code:\n\`\`\`\n${code}\n\`\`\`` : ''}
-      Provide a concise, helpful coding response. Use Markdown.
-    `;
+    const prompt = `You are "Codalyx CoachAI", an expert coding assistant.
+Context/Question: ${context}
+${code ? `Code:\n\`\`\`\n${code}\n\`\`\`` : ''}
+Provide a concise, accurate, helpful response. Use Markdown with headers and code blocks where useful.`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    return response.text();
+    const text = response.text();
+    
+    // Save to cache
+    reportCache.set(cacheKey, text);
+    saveCache();
+    
+    console.log(`[CoachAI] Success with model: ${modelName}`);
+    return text;
+
   } catch (error) {
-    console.error("AI Review Failure:", error.message);
-    return `### ⚠️ Neural Link Interrupted
-      
-The Principal Architect is currently processing a high volume of requests or the Neural Link is unstable.
+    const isRateLimit = 
+      error.message.includes('429') || 
+      error.message.includes('quota') || 
+      error.message.toLowerCase().includes('rate') ||
+      error.message.includes('RESOURCE_EXHAUSTED');
 
-**Diagnostic Insight:**
-- Concept: ${context || "General Inquiry"}
-- Status: Fallback Mode Active
+    if (isRateLimit && modelIndex < MODEL_CHAIN.length - 1) {
+      // Try next model in chain after a delay
+      const delay = (modelIndex + 1) * 7000; // 7s, 14s
+      console.warn(`[CoachAI] Rate limit on ${modelName}, trying ${MODEL_CHAIN[modelIndex + 1]} in ${delay/1000}s...`);
+      await sleep(delay);
+      return reviewCode(code, context, modelIndex + 1);
+    }
 
-Please try your request again in a few moments or check your internet connectivity.`;
+    console.error(`[CoachAI] All models exhausted. Last error: ${error.message}`);
+    return isRateLimit
+      ? `### RATE_LIMIT_ERROR\nAll AI models are currently at capacity. Please wait 60 seconds and try again.`
+      : `### NETWORK_ERROR\nCould not reach the AI service. Please check your connection.`;
   }
 }
 
+
 export async function analyzeProblemIntelligence(title, userCode = null) {
-  const cacheKey = userCode ? `${title}-${userCode.length}` : title;
+  // Use unique key based on title and code content hash to avoid collisions
+  const codeHash = userCode ? Buffer.from(userCode).toString('base64').substring(0, 32) : 'default';
+  const cacheKey = `intel-${title}-${codeHash}`;
   if (reportCache.has(cacheKey)) {
     return reportCache.get(cacheKey);
   }
@@ -125,8 +183,10 @@ export async function analyzeProblemIntelligence(title, userCode = null) {
     
     // Save to cache
     reportCache.set(cacheKey, parsed);
+    saveCache();
     return parsed;
   } catch (error) {
+    console.error(`[AI Intelligence] Pipeline failed for ${title}:`, error.message);
     console.error("Intelligence Analysis Error:", error.message);
     if (error.message.includes('429') || error.message.includes('Quota') || error.message.includes('503')) {
       console.warn("Generating Circuit-Breaker Mock Response due to API Rate Limit.");
