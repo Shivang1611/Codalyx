@@ -58,11 +58,15 @@ export function AuthProvider({ children }) {
 
 
   function loginWithGoogle() {
-    window.location.href = 'http://localhost:4000/api/auth/google'
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
+    const cleanBase = baseUrl.replace(/\/api$/, '') // Remove /api suffix for passport redirect
+    window.location.href = `${cleanBase}/api/auth/google`
   }
 
   function loginWithGitHub() {
-    window.location.href = 'http://localhost:4000/api/auth/github'
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
+    const cleanBase = baseUrl.replace(/\/api$/, '') // Remove /api suffix for passport redirect
+    window.location.href = `${cleanBase}/api/auth/github`
   }
 
   async function logout() {
