@@ -25,15 +25,25 @@ export default function ResourceList({ resources, title = "Recommended Learning 
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {resources.map((res, i) => (
-          <a 
-            key={i} 
-            href={res.url || "https://www.youtube.com/results?search_query=" + encodeURIComponent(res.title)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group bg-[var(--bg-surface)] border border-[var(--border)] p-6 rounded-2xl flex flex-col hover:border-[var(--cyan)]/30 hover:shadow-xl hover:shadow-[var(--cyan-glow)] transition-all duration-500 cursor-pointer no-underline"
-          >
-            <div className="flex items-start justify-between mb-5">
+        {resources.map((res, i) => {
+          const getSafeLink = () => {
+            if (res.url && res.url.startsWith('http') && res.url !== 'string') return res.url;
+            const query = encodeURIComponent(res.title || "LeetCode problem pattern");
+            if (res.type?.toLowerCase().includes('video') || res.source?.toLowerCase().includes('youtube')) {
+              return `https://www.youtube.com/results?search_query=${query}`;
+            }
+            return `https://www.google.com/search?q=${query}`;
+          };
+
+          return (
+            <a 
+              key={i} 
+              href={getSafeLink()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group bg-[var(--bg-surface)] border border-[var(--border)] p-6 rounded-2xl flex flex-col hover:border-[var(--cyan)]/30 hover:shadow-xl hover:shadow-[var(--cyan-glow)] transition-all duration-500 cursor-pointer no-underline"
+            >
+              <div className="flex items-start justify-between mb-5">
               <div className="w-12 h-12 bg-[var(--bg-hover)] rounded-xl flex items-center justify-center text-[var(--cyan)] group-hover:scale-110 group-hover:bg-[var(--cyan)]/10 transition-all duration-500">
                 {res.type === 'Video' ? <Play size={24} /> : <Compass size={24} />}
               </div>
@@ -56,7 +66,8 @@ export default function ResourceList({ resources, title = "Recommended Learning 
               <ExternalLink size={14} className="opacity-50" />
             </div>
           </a>
-        ))}
+          );
+        })}
         
         {/* ADD A "VIEW MORE" CARD */}
         <div className="hidden lg:flex bg-gradient-to-br from-[var(--purple)]/5 to-[var(--cyan)]/5 border border-dashed border-[var(--border)] p-6 rounded-2xl flex-col items-center justify-center text-center group hover:border-[var(--cyan)]/50 transition-all">

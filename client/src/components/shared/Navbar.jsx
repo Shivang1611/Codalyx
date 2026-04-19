@@ -1,4 +1,5 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useTheme } from '../../context/ThemeContext.jsx';
 import { 
@@ -15,7 +16,28 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const { theme, toggle } = useTheme();
   const location = useLocation();
-  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close dropdown when clicking anywhere outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    document.addEventListener('touchstart', handler);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('touchstart', handler);
+    };
+  }, []);
+
+  // Close dropdown on route change
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   if (!user) return null;
 
@@ -32,7 +54,7 @@ export default function Navbar() {
             <Terminal size={18} className="text-white" />
           </div>
           <span className="font-['Space_Grotesk'] text-xl font-bold tracking-tight text-[var(--text-primary)]">
-            ECHOES
+            Codalyx
           </span>
         </Link>
 
@@ -44,7 +66,7 @@ export default function Navbar() {
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
                 location.pathname === link.path 
                   ? 'bg-[var(--cyan)]/10 text-[var(--cyan)] border border-[var(--cyan)]/20 shadow-[0_0_10px_rgba(34,211,238,0.1)]' 
-                  : 'text-zinc-500 hover:text-white hover:bg-white/5 border border-transparent'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] border border-transparent'
               }`}
             >
               {link.icon}
@@ -57,7 +79,7 @@ export default function Navbar() {
       <div className="flex items-center gap-4">
         <button
           onClick={toggle}
-          className="p-2.5 rounded-xl bg-white/5 border border-[var(--border)] text-zinc-400 hover:text-white hover:border-zinc-700 transition-all"
+          className="p-2.5 rounded-xl bg-[var(--bg-hover)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--cyan)]/30 transition-all"
         >
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
@@ -65,32 +87,54 @@ export default function Navbar() {
         <div className="h-8 w-[1px] bg-[var(--border)] mx-1" />
 
         <div className="flex items-center gap-3 pl-2">
+          {/* Name - hidden on mobile */}
           <div className="text-right hidden sm:block">
             <div className="text-xs font-bold text-[var(--text-primary)] leading-none">{user.name}</div>
             <div className="text-[10px] text-[var(--cyan)] font-bold uppercase tracking-tighter mt-1">Prime Member</div>
           </div>
-          <div className="relative group">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900 border border-zinc-700 flex items-center justify-center text-white font-bold text-sm shadow-inner cursor-pointer">
-              {user.image ? <img src={user.image} className="w-full h-full rounded-full object-cover" alt="" /> : <User size={18} />}
-            </div>
-            
-            <div className="absolute right-0 mt-2 w-48 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all p-2 z-[60]">
-               <Link 
-                to="/profile"
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-colors text-sm font-bold border border-transparent"
-              >
-                <User size={16} />
-                My Profile DNA
-              </Link>
-              <div className="h-[1px] bg-[var(--border)] my-1 mx-2" />
-               <button 
-                onClick={logout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-400/10 transition-colors text-sm font-bold"
-              >
-                <LogOut size={16} />
-                Logout Session
-              </button>
-            </div>
+
+          {/* Avatar + dropdown — click-based, works on mobile */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen(prev => !prev)}
+              className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--cyan)] to-[var(--blue,#6366f1)] border-2 border-[var(--cyan)]/40 flex items-center justify-center text-white font-bold text-sm shadow-lg hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-[var(--cyan)]/50"
+              aria-label="Open profile menu"
+              aria-expanded={menuOpen}
+            >
+              {user.image 
+                ? <img src={user.image} className="w-full h-full rounded-full object-cover" alt={user.name} /> 
+                : <User size={18} />
+              }
+            </button>
+
+            {/* Dropdown */}
+            {menuOpen && (
+              <div className="absolute right-0 top-[calc(100%+8px)] w-52 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-2xl shadow-black/10 p-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-150">
+                {/* User info header */}
+                <div className="px-4 py-3 border-b border-[var(--border)] mb-1">
+                  <p className="text-xs font-bold text-[var(--text-primary)] truncate">{user.name}</p>
+                  <p className="text-[10px] text-[var(--text-muted)] truncate mt-0.5">{user.email}</p>
+                </div>
+
+                <Link
+                  to="/profile"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors text-sm font-bold"
+                >
+                  <User size={16} />
+                  My Profile DNA
+                </Link>
+
+                <div className="h-[1px] bg-[var(--border)] my-1 mx-2" />
+
+                <button
+                  onClick={() => { setMenuOpen(false); logout(); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-colors text-sm font-bold"
+                >
+                  <LogOut size={16} />
+                  Logout Session
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

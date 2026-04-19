@@ -30,7 +30,7 @@ export default function SlidingPanel({ title, slides, accentColor = 'var(--cyan)
         </div>
       </div>
 
-      <div className="p-6 h-[400px] overflow-y-auto relative">
+      <div className="p-6 min-h-[280px] overflow-y-auto relative">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide}
@@ -38,7 +38,7 @@ export default function SlidingPanel({ title, slides, accentColor = 'var(--cyan)
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -40 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="h-full"
+            className="w-full"
           >
             {slides[currentSlide]}
           </motion.div>

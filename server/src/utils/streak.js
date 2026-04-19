@@ -198,34 +198,98 @@ export function computeRevisionStats(days, profile) {
   }
 }
 
+import { blind75Problems } from '../data/blind75.js'
+
 /**
  * Filter and prioritize questions that need revision based on status and accuracy.
  */
 export function getOverdueQuestions(profiles) {
-  const allSubs = []
+  const candidates = []
+  const blind75Titles = blind75Problems.map(p => p.title.toLowerCase())
+  
   profiles.forEach(p => {
     if (!p.recentSubmissions) return
+    
+    // 1. Prioritize real failures and low accuracy
     p.recentSubmissions.forEach(sub => {
-      allSubs.push({
-        ...sub,
-        profileId: p._id,
-        platform: p.platform
-      })
+      const isBlind75 = sub.title && blind75Titles.includes(sub.title.toLowerCase())
+      
+      if (sub.title && (sub.status !== 'Accepted' || (sub.accuracy || 0) < 65)) {
+        candidates.push({ 
+          id: sub.id || sub.titleSlug,
+          title: sub.title,
+          topic: sub.topic,
+          difficulty: sub.difficulty,
+          accuracy: sub.accuracy,
+          status: sub.status,
+          profileId: p._id, 
+          platform: p.platform, 
+          reason: isBlind75 ? 'Blind 75 Gap' : 'Low Accuracy' 
+        })
+      }
     })
+
+    // 2. If candidates are low, inject questions from Weak Areas
+    if (candidates.length < 5 && p.weakAreas?.length > 0) {
+      const topWeakTopics = p.weakAreas.slice(0, 2).map(w => w.topic)
+      p.recentSubmissions.forEach(sub => {
+        if (topWeakTopics.includes(sub.topic) && !candidates.find(c => c.id === (sub.id || sub.titleSlug))) {
+          candidates.push({ 
+            id: sub.id || sub.titleSlug,
+            title: sub.title,
+            topic: sub.topic,
+            difficulty: sub.difficulty,
+            accuracy: sub.accuracy,
+            status: sub.status,
+            profileId: p._id, 
+            platform: p.platform, 
+            reason: 'Weak Area Gap' 
+          })
+        }
+      })
+    }
+
+    // 3. Final Fallback: Random solved problems from different accounts
+    // Removing the recent submissions dependency so it works even for empty profiles
   })
 
-  return allSubs
-    .filter(s => s.title && (s.status !== 'Accepted' || (s.accuracy || 0) < 60))
-    .sort((a, b) => (a.accuracy || 0) - (b.accuracy || 0)) // Lowest accuracy first
+  // 3. Final Fallback: Random Blind 75 questions (Daily Checklist)
+  const leetcodeProfile = profiles.find(p => p.platform?.toUpperCase() === 'LEETCODE');
+  const fallbackProfileId = leetcodeProfile ? leetcodeProfile._id : profiles[0]?._id;
+  const fallbackPlatform  = 'LEETCODE'; // Blind 75 questions are strictly LeetCode
+
+  if (candidates.length < 5 && fallbackProfileId) {
+    const shuffledBlind75 = [...blind75Problems].sort(() => 0.5 - Math.random()).slice(0, 5 - candidates.length);
+    
+    shuffledBlind75.forEach(b75 => {
+      if (!candidates.find(c => c.title?.toLowerCase() === b75.title.toLowerCase())) {
+        candidates.push({
+          id: b75.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          title: b75.title,
+          topic: b75.topic || 'Blind 75',
+          platform: fallbackPlatform,
+          profileId: fallbackProfileId,
+          accuracy: 0,
+          status: 'Todo',
+          difficulty: b75.difficulty || 'Medium',
+          reason: 'Daily Target'
+        });
+      }
+    });
+  }
+
+  return candidates
+    .sort((a, b) => (a.accuracy || 0) - (b.accuracy || 0))
     .slice(0, 10)
     .map(s => ({
-      id: s.id,
-      title: s.title,
+      id: s.id || s.titleSlug || (s.title || s.questionTitle || s.name)?.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      title: s.title || s.questionTitle || s.name || 'Untitled Challenge',
       topic: s.topic || 'General',
       platform: s.platform,
       profileId: s.profileId,
       accuracy: s.accuracy || 0,
       status: s.status,
-      difficulty: s.difficulty || 'Medium'
+      difficulty: s.difficulty || 'Medium',
+      reason: s.reason
     }))
 }

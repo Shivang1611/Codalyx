@@ -76,9 +76,13 @@ router.post('/:profileId/day', validate(daySchema), async (req, res) => {
     if (profile.userId.toString() !== req.userId)
       return res.status(403).json({ error: 'Forbidden' });
 
+    const updateQuery = completed 
+      ? { $set: { completed: true }, $inc: { questions: 1, durationMin: 15 } }
+      : { $set: { completed: false, questions: 0, durationMin: 0 } };
+
     await RevisionDay.findOneAndUpdate(
       { profileId: profile._id, date: new Date(date) },
-      { completed, questions: 1, durationMin: 15 }, // Simple increment for now
+      updateQuery,
       { upsert: true, new: true }
     )
 

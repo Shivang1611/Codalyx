@@ -70,40 +70,40 @@ export default function Contests() {
         
         {/* GAMIFICATION HEADER */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-gradient-to-br from-[#1a1a1a] to-[#262626] border border-white/5 rounded-3xl p-6 relative overflow-hidden group">
-             <div className="absolute -right-4 -top-4 w-24 h-24 bg-[var(--cyan)]/10 rounded-full blur-3xl group-hover:bg-[var(--cyan)]/20 transition-all" />
+          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-3xl p-6 relative overflow-hidden group hover:border-[var(--cyan)]/30 transition-all shadow-[var(--shadow-card)]">
+             <div className="absolute -right-4 -top-4 w-24 h-24 bg-[var(--cyan)]/8 rounded-full blur-3xl group-hover:bg-[var(--cyan)]/15 transition-all" />
              <div className="flex items-center gap-4 mb-4">
                <div className="w-12 h-12 bg-[var(--cyan-glow)] rounded-2xl flex items-center justify-center text-[var(--cyan)]">
                  <Zap size={24} />
                </div>
                <div>
-                  <h3 className="text-2xl font-black text-white font-['Space_Grotesk']">7 Day Streak</h3>
+                  <h3 className="text-2xl font-black text-[var(--text-primary)] font-['Space_Grotesk']">7 Day Streak</h3>
                   <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Weekly Warrior Active</p>
                </div>
              </div>
              <p className="text-xs text-[var(--text-secondary)]">You're in the top 5% of consistent participants this month.</p>
           </div>
 
-          <div className="bg-gradient-to-br from-[#1a1a1a] to-[#262626] border border-white/5 rounded-3xl p-6 relative overflow-hidden group">
+          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-3xl p-6 relative overflow-hidden group hover:border-[var(--cyan)]/30 transition-all shadow-[var(--shadow-card)]">
              <div className="flex items-center gap-4 mb-4">
-               <div className="w-12 h-12 bg-[var(--purple-glow)] rounded-2xl flex items-center justify-center text-[var(--purple)]">
+               <div className="w-12 h-12 bg-[var(--cyan-glow)] rounded-2xl flex items-center justify-center text-[var(--cyan)]">
                  <Trophy size={24} />
                </div>
                <div>
-                  <h3 className="text-2xl font-black text-white font-['Space_Grotesk']">Ranking +312</h3>
+                  <h3 className="text-2xl font-black text-[var(--text-primary)] font-['Space_Grotesk']">Ranking +312</h3>
                   <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Global Improvement</p>
                </div>
              </div>
              <p className="text-xs text-[var(--text-secondary)]">Your performance in LC Weekly 444 boosted your tier standing.</p>
           </div>
 
-          <div className="bg-gradient-to-br from-[#1a1a1a] to-[#262626] border border-white/5 rounded-3xl p-6 relative overflow-hidden group">
+          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-3xl p-6 relative overflow-hidden group hover:border-[var(--cyan)]/30 transition-all shadow-[var(--shadow-card)]">
              <div className="flex items-center gap-4 mb-4">
-               <div className="w-12 h-12 bg-[var(--green-glow)] rounded-2xl flex items-center justify-center text-[var(--green)]">
+               <div className="w-12 h-12 bg-[var(--cyan-glow)] rounded-2xl flex items-center justify-center text-[var(--cyan)]">
                  <Award size={24} />
                </div>
                <div>
-                  <h3 className="text-2xl font-black text-white font-['Space_Grotesk']">12 Badges</h3>
+                  <h3 className="text-2xl font-black text-[var(--text-primary)] font-['Space_Grotesk']">12 Badges</h3>
                   <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Achievements unlocked</p>
                </div>
              </div>
@@ -147,9 +147,9 @@ export default function Contests() {
                        <PlatformLogo platform={c.platform} size="w-8 h-8" />
                        <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">{c.platform}</span>
                      </div>
-                     <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[var(--bg-hover)] rounded-full border border-white/5">
+                     <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[var(--cyan-glow)] rounded-full border border-[var(--cyan)]/20">
                         <div className="w-1.5 h-1.5 rounded-full bg-[var(--cyan)] animate-pulse" />
-                        <span className="text-[9px] font-bold text-white">LIVE SOON</span>
+                        <span className="text-[9px] font-bold text-[var(--cyan)]">LIVE SOON</span>
                      </div>
                    </div>
 
@@ -168,11 +168,11 @@ export default function Contests() {
                    <div className="flex items-center gap-3">
                       <button 
                         onClick={() => handleRegister(c._id)}
-                        className={`flex-grow py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${c.userStatus === 'REGISTERED' ? 'bg-[var(--bg-hover)] text-[var(--cyan)] border border-[var(--cyan)]/20 shadow-inner' : 'bg-white text-black hover:bg-[var(--cyan)] hover:text-white'}`}
+                        className={`flex-grow py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${c.userStatus === 'REGISTERED' ? 'bg-[var(--bg-hover)] text-[var(--cyan)] border border-[var(--cyan)]/20 shadow-inner' : 'bg-[var(--bg-hover)] text-[var(--text-primary)] border border-[var(--border)] hover:bg-[var(--cyan)] hover:text-white hover:border-transparent'}`}
                       >
                          {c.userStatus === 'REGISTERED' ? <><CheckCircle2 size={14} /> Registered</> : 'Sync Registration'}
                       </button>
-                      <a href={c.url} target="_blank" rel="noreferrer" className="p-3 bg-[var(--bg-hover)] border border-white/5 rounded-xl text-[var(--text-muted)] hover:text-white transition-colors">
+                      <a href={c.url} target="_blank" rel="noreferrer" className="p-3 bg-[var(--bg-hover)] border border-[var(--border)] rounded-xl text-[var(--text-muted)] hover:text-[var(--cyan)] transition-colors">
                         <ChevronRight size={18} />
                       </a>
                    </div>
@@ -201,7 +201,7 @@ export default function Contests() {
                           <div className="flex items-center gap-3">
                             <PlatformLogo platform={h.contestId.platform} size="w-6 h-6" />
                             <div>
-                               <p className="text-sm font-bold text-white">{h.contestId.title}</p>
+                               <p className="text-sm font-bold text-[var(--text-primary)]">{h.contestId.title}</p>
                                <p className="text-[10px] text-[var(--text-muted)]">{format(new Date(h.contestId.startTime), 'MMM d, yyyy')}</p>
                             </div>
                           </div>
@@ -209,7 +209,7 @@ export default function Contests() {
                         <td className="px-6 py-5">
                            <div className="flex items-center gap-4">
                               <div>
-                                <p className="text-sm font-black text-white">{h.rank || 'N/A'}</p>
+                                <p className="text-sm font-black text-[var(--text-primary)]">{h.rank || 'N/A'}</p>
                                 <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase">Rank</p>
                               </div>
                               <div className="w-px h-6 bg-[var(--border)]" />
@@ -251,11 +251,11 @@ export default function Contests() {
                <Bell size={20} className="animate-bounce" />
              </div>
              <div>
-                <p className="text-sm font-bold text-white">Smart Reminders Active</p>
+                <p className="text-sm font-bold text-[var(--text-primary)]">Smart Reminders Active</p>
                 <p className="text-xs text-[var(--text-secondary)]">We'll alert you 1 hour before LeetCode Weekly and CF rounds.</p>
              </div>
            </div>
-           <button className="px-6 py-2.5 bg-white text-black rounded-xl text-xs font-black uppercase tracking-wider hover:bg-[var(--cyan)] hover:text-white transition-all shadow-xl">Configure Alerts</button>
+           <button className="px-6 py-2.5 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-primary)] rounded-xl text-xs font-black uppercase tracking-wider hover:bg-[var(--cyan)] hover:text-white hover:border-transparent transition-all">Configure Alerts</button>
         </div>
       </div>
     </PageWrapper>

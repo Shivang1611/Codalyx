@@ -34,7 +34,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
           <div className="w-8 h-8 bg-[var(--cyan)] rounded-lg flex items-center justify-center shadow-lg shadow-[var(--cyan-glow)]">
             <Zap size={18} className="text-white" strokeWidth={2.5} />
           </div>
-          <span className="text-xl font-bold font-['Space_Grotesk'] tracking-tight text-[var(--text-primary)]">ECHOES</span>
+          <span className="text-xl font-bold font-['Space_Grotesk'] tracking-tight text-[var(--text-primary)]">Codalyx</span>
         </div>
         <button
           onClick={() => setIsOpen && setIsOpen(false)}

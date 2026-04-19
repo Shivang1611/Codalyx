@@ -4,10 +4,11 @@ import api from '../utils/api.js'
 import { toast } from 'sonner'
 import SlidingPanel from '../components/question/SlidingPanel.jsx'
 import PageWrapper from '../components/shared/PageWrapper.jsx'
-import PsychologyRadar from '../components/question/PsychologyRadar.jsx'
 import ConceptMastery from '../components/question/ConceptMastery.jsx'
+import PsychologicalProfile from '../components/question/PsychologicalProfile.jsx'
 import LearningPath from '../components/question/LearningPath.jsx'
 import ResourceList from '../components/shared/ResourceList.jsx'
+import QuestionOverview from '../components/question/QuestionOverview.jsx'
 import { ChevronLeft, Terminal, GitMerge, Brain, Target, Compass, ExternalLink, Play, BookOpen, Layers } from 'lucide-react'
 
 const EditorialBlock = ({ editorial }) => {
@@ -184,6 +185,8 @@ export default function QuestionIntelligence() {
         </h1>
       </div>
 
+      <QuestionOverview overview={report.overview} />
+
       {/* CODE INJECTION MODULE */}
       <div className="mb-8 bg-[#0d1117] border border-[var(--border)] rounded-2xl p-6 relative overflow-hidden group shadow-lg">
         <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[var(--cyan)] to-[var(--blue)]" />
@@ -251,15 +254,19 @@ export default function QuestionIntelligence() {
           onNext={() => handleNext(1, 1)}
           slides={[
             <div className="flex flex-col gap-6 py-2">
+              <div className="bg-[var(--purple)]/10 text-[var(--purple)] text-xs p-4 rounded-xl border border-[var(--purple)]/20 leading-relaxed font-medium mb-2 shadow-inner shadow-[var(--purple)]/5">
+                 <strong className="block tracking-widest uppercase mb-1 opacity-80 text-[10px]">Execution Trace Protocol:</strong>
+                 The AI has simulated your problem-solving flow line by line across common edge-case vulnerabilities and architectural constraints.
+              </div>
               {(report.thoughtProcess || []).map((node, i, arr) => (
                 <div key={i} className="relative flex items-center gap-4">
                   {i < arr.length - 1 && <div className="absolute left-3 top-6 bottom-[-1.5rem] w-[2px] bg-[var(--border)] border-dashed border-r border-transparent" />}
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 z-10 ${node.status === 'success' ? 'bg-[var(--green)]' : 'bg-[var(--orange)] animate-pulse'}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 z-10 ${node.status === 'success' ? 'bg-[var(--green)]' : 'bg-[var(--orange)] animate-pulse shadow-lg shadow-[var(--orange)]/30'}`}>
                     {node.status === 'success' ? <div className="w-1.5 h-1.5 bg-white rounded-full" /> : <span className="text-white text-[10px]">!</span>}
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-[var(--text-primary)]">{node.label}</h4>
-                    {node.msg && <p className="text-[10px] text-[var(--orange)] font-medium uppercase tracking-tighter">{node.msg}</p>}
+                    <h4 className="text-sm font-bold text-[var(--text-primary)]">{node.label}</h4>
+                    {node.msg && <p className="text-[10px] text-[var(--orange)] font-bold uppercase tracking-tighter mt-0.5">{node.msg}</p>}
                   </div>
                 </div>
               ))}
@@ -267,56 +274,39 @@ export default function QuestionIntelligence() {
           ]}
         />
 
-        {/* PANEL 3 - PSYCHOLOGY ANALYSIS */}
+        {/* PANEL 3 - ADAPTIVE LEARNING PATH */}
         <SlidingPanel 
-          title="Psychology Analysis" 
-          accentColor="var(--orange)"
+          title="Adaptive Learning Path" 
+          accentColor="var(--cyan)"
           currentSlide={panelStates[2]}
           onPrev={() => handlePrev(2)}
-          onNext={() => handleNext(2, 2)}
+          onNext={() => handleNext(2, 1)}
           slides={[
-            <PsychologyRadar data={report.psychology || []} />,
-            <div className="space-y-4">
-              {(report.psychology || []).slice(0, 4).map((p, i) => (
-                <div key={i} className="space-y-1">
-                  <div className="flex justify-between text-[10px] font-bold text-[var(--text-secondary)]">
-                    <span>{p.trait}</span>
-                    <span>{p.score}%</span>
-                  </div>
-                  <div className="h-1.5 bg-[var(--bg-hover)] rounded-full overflow-hidden">
-                    <div className="h-full bg-[var(--cyan)]" style={{ width: `${p.score}%` }} />
-                  </div>
-                </div>
-              ))}
-              <p className="text-[10px] text-[var(--text-muted)] italic pt-2">AI Assessment: Your profile reflects strong resilience, try keeping calmness high during nested algorithmic complexity.</p>
-            </div>
+            <LearningPath paths={report.paths || []} />
           ]}
         />
 
         {/* PANEL 4 - CONCEPT MASTERY */}
         <SlidingPanel 
-          title="Concept Mastery" 
-          accentColor="var(--green)"
+          title="Concept Mastery 🧠" 
+          accentColor="var(--blue)"
           currentSlide={panelStates[3]}
           onPrev={() => handlePrev(3)}
           onNext={() => handleNext(3, 1)}
           slides={[
-            <ConceptMastery mastered={report.mastery?.mastered || []} needsWork={report.mastery?.needsWork || []} />
+            <ConceptMastery mastery={report.mastery} />
           ]}
         />
 
-      </div>
-
-      {/* PANEL 5 - ADAPTIVE LEARNING PATH */}
-      <div className="mb-10">
+        {/* PANEL 5 - PSYCHOLOGICAL PROFILE */}
         <SlidingPanel 
-          title="Your Tailored Learning Path" 
-          accentColor="var(--cyan)"
+          title="Psychological Profile & Traits" 
+          accentColor="var(--teal)"
           currentSlide={panelStates[4]}
           onPrev={() => handlePrev(4)}
           onNext={() => handleNext(4, 1)}
           slides={[
-            <LearningPath paths={report.paths || []} />
+            <PsychologicalProfile profile={report.psychologicalProfile} />
           ]}
         />
       </div>

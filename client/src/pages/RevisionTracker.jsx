@@ -37,19 +37,41 @@ export default function RevisionTracker() {
     }
   }
 
-  const handleDayToggle = async (date, completed) => {
+  const handleDayToggle = async (date, completed, targetProfileId = null, questionId = null) => {
     try {
-      setStats(prev => ({
-        ...prev,
-        calendar: prev.calendar.map(d => d.date === date ? { ...d, completed } : d)
-      }))
+      const finalProfileId = targetProfileId || profileId
+      
+      if (!finalProfileId || finalProfileId === 'total') {
+        toast.error('Context Error: Revision must be linked to a specific platform profile.')
+        return
+      }
 
-      const res = await api.post(`/revision/${profileId}/day`, { date, completed })
-      setStats(res.data)
-      if (completed) toast.success('Revision marked as complete!')
+      // Optimistic UI Update: 
+      // 1. Update calendar array
+      // 2. Remove the completed task from the queue locally to give a "checklist" experience
+      setStats(prev => {
+        const existing = prev.calendar.find(d => d.date === date);
+        const newCalendar = existing 
+          ? prev.calendar.map(d => d.date === date ? { ...d, completed, questions: completed ? (d.questions || 0) + 1 : 0 } : d)
+          : [...prev.calendar, { date, completed, questions: completed ? 1 : 0 }];
+
+        return {
+          ...prev,
+          calendar: newCalendar,
+          overdue: questionId && prev.overdue ? prev.overdue.filter(q => q.id !== questionId) : prev.overdue
+        }
+      })
+
+      // We ONLY post to backend. We do NOT run `setStats(res.data)` 
+      // because `res.data` returns profile-specific stats, which would break 
+      // the UI if the user is currently viewing the 'Global / Total' dashboard.
+      await api.post(`/revision/${finalProfileId}/day`, { date, completed })
+      
+      if (completed) toast.success('Task marked as completed!')
     } catch (err) {
+      console.error('Revision Log Error:', err.response?.data)
       toast.error('Failed to update revision status')
-      fetchStats()
+      fetchStats() // Revert to source of truth if network fails
     }
   }
 
@@ -165,17 +187,17 @@ export default function RevisionTracker() {
             {/* Revision Queue */}
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                   <div className="w-10 h-10 rounded-2xl bg-[var(--red)]/10 flex items-center justify-center text-[var(--red)]">
-                    <AlertCircle size={20} />
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-[var(--cyan)]/10 text-[var(--cyan)] flex items-center justify-center border border-[var(--cyan)]/20 shadow-sm">
+                    <Target size={24} className="stroke-[2]" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-[var(--text-primary)] font-['Space_Grotesk']">Revision Queue</h2>
-                    <p className="text-xs text-[var(--text-muted)] font-medium">Critical problems needing immediate attention.</p>
+                    <h2 className="text-xl font-bold text-[var(--text-primary)] font-['Space_Grotesk']">Daily Focus</h2>
+                    <p className="text-xs text-[var(--text-muted)] font-medium">Strategic problem solving roadmap.</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-[var(--red)] uppercase tracking-widest bg-[var(--red)]/10 px-3 py-1.5 rounded-full border border-[var(--red)]/20 animate-pulse">
-                  {stats.overdue?.length || 0} Critical Tasks
+                <span className="text-[10px] font-bold text-[var(--cyan)] uppercase tracking-widest bg-[var(--cyan)]/10 px-3 py-1.5 rounded-full border border-[var(--cyan)]/20">
+                  {stats.overdue?.length || 0} Daily Targets
                 </span>
               </div>
 
@@ -187,20 +209,31 @@ export default function RevisionTracker() {
                     <p className="text-xs text-[var(--text-muted)] mt-1">No critical failures detected in recent activity.</p>
                   </div>
                 ) : (
-                  stats.overdue.map((q) => (
+                  stats.overdue.map((q, idx) => (
                     <motion.div 
-                      key={q.id}
-                      onClick={() => navigate(`/analysis/${q.profileId}/question/${q.id}`)}
-                      className="group bg-[var(--bg-card)] border border-[var(--border)] p-5 rounded-3xl flex items-center gap-5 hover:border-[var(--cyan)]/40 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden"
+                      key={`${q.platform}-${q.id || q.title || idx}`}
+                      className="group bg-[var(--bg-card)] border border-[var(--border)] p-5 rounded-3xl flex flex-col md:flex-row md:items-center gap-5 hover:border-[var(--cyan)]/40 hover:shadow-xl transition-all relative overflow-hidden"
                     >
-                      <div className="absolute top-0 right-0 py-2 px-4 bg-[var(--green)]/10 rounded-bl-2xl opacity-0 group-hover:opacity-100 transition-opacity">
-                         <span className="text-[9px] font-black text-[var(--green)] uppercase tracking-widest">Mastery Needed</span>
-                      </div>
-                      <div className="w-14 h-14 rounded-2xl bg-[var(--bg-surface)] flex items-center justify-center border border-[var(--border)] group-hover:border-[var(--cyan)]/40 hover:scale-105 transition-all">
+                      <div 
+                        onClick={() => navigate(`/analysis/${q.profileId}/question/${q.id}`)}
+                        className="w-14 h-14 rounded-2xl bg-[var(--bg-surface)] flex items-center justify-center border border-[var(--border)] group-hover:border-[var(--cyan)]/40 hover:scale-105 transition-all cursor-pointer shrink-0"
+                      >
                         <PlatformLogo platform={q.platform} size="w-7 h-7" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-base font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--cyan)] transition-colors">{q.title}</h4>
+                        <div 
+                          onClick={() => {
+                            if (q.platform?.toUpperCase() === 'LEETCODE' && q.id) {
+                              window.open(`https://leetcode.com/problems/${q.id}/`, '_blank');
+                            } else {
+                              navigate(`/analysis/${q.profileId}/question/${q.id}`);
+                            }
+                          }}
+                          className="flex items-center gap-2 cursor-pointer group/link w-fit"
+                        >
+                          <h4 className="text-base font-bold text-[var(--text-primary)] truncate group-hover/link:text-[var(--cyan)] transition-colors">{q.title}</h4>
+                          <ArrowRight size={14} className="text-[var(--text-muted)] group-hover/link:text-[var(--cyan)] transition-colors opacity-0 group-hover/link:opacity-100 -translate-x-2 group-hover/link:translate-x-0" />
+                        </div>
                         <div className="flex items-center gap-3 mt-1.5">
                           <span className="px-2 py-0.5 rounded-md bg-[var(--bg-hover)] text-[9px] font-black uppercase text-[var(--text-muted)] tracking-wider border border-[var(--border)]">{q.topic}</span>
                           <div className={`flex items-center gap-1 text-[10px] font-bold ${q.difficulty === 'Hard' ? 'text-[var(--red)]' : q.difficulty === 'Medium' ? 'text-[var(--orange)]' : 'text-[var(--green)]'}`}>
@@ -208,12 +241,20 @@ export default function RevisionTracker() {
                           </div>
                         </div>
                       </div>
-                      <div className="text-right shrink-0 pr-2">
-                        <div className="text-lg font-black text-[var(--red)]">{q.accuracy}%</div>
-                        <div className="text-[9px] font-black uppercase text-[var(--text-muted)] tracking-tighter">Precision</div>
-                      </div>
-                      <div className="w-10 h-10 rounded-full bg-[var(--bg-hover)] flex items-center justify-center text-[var(--text-muted)] group-hover:bg-[var(--cyan)] group-hover:text-white transition-all">
-                        <ArrowRight size={18} />
+                      
+                      <div className="flex items-center justify-between md:justify-end gap-5 pt-4 md:pt-0 border-t md:border-t-0 border-[var(--border)] pr-2">
+                        <div className="text-right shrink-0">
+                          <div className="text-lg font-black text-[var(--red)]">{q.accuracy}%</div>
+                          <div className="text-[9px] font-black uppercase text-[var(--text-muted)] tracking-tighter">Precision</div>
+                        </div>
+                        
+                        <button 
+                          onClick={() => handleDayToggle(new Date().toISOString().slice(0, 10), true, q.profileId, q.id)}
+                          className="w-10 h-10 rounded-full border-2 border-[var(--border)] group-hover:border-[var(--green)]/50 flex items-center justify-center text-[var(--border)] group-hover:text-[var(--green)] hover:bg-[var(--green)] hover:!text-white hover:!border-[var(--green)] transition-all shadow-sm active:scale-90"
+                          title="Mark as Complete"
+                        >
+                          <CheckCircle2 size={20} className="stroke-[2.5]" />
+                        </button>
                       </div>
                     </motion.div>
                   ))

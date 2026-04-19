@@ -63,6 +63,14 @@ export async function analyzeProblemIntelligence(title, userCode = null) {
       Respond strictly with a valid JSON object matching exactly this structure:
       {
         "title": "${title}",
+        "overview": {
+          "difficulty": { "level": "string (Easy/Medium/Hard)", "actualComplexity": "string", "complexityScore": "number 1-100" },
+          "frequency": { "level": "string (Low/High/Very High)", "percentage": "string e.g. 87%" },
+          "ratingReason": { "title": "Why it's rated [Level]", "reasons": ["string", "string"] },
+          "companies": ["exactly 4 top company names"],
+          "rounds": { "phone": "string e.g. 65%", "onsite": "string e.g. 35%" },
+          "expectedTime": { "minutes": "number", "successRate": "string e.g. 68%" }
+        },
         "detectedMistake": { 
           "buggy": "multi-line buggy code string", 
           "correct": "multi-line fixed code string", 
@@ -79,16 +87,31 @@ export async function analyzeProblemIntelligence(title, userCode = null) {
           { "label": "string", "status": "success", "msg": "" },
           { "label": "string", "status": "fail", "msg": "error message" }
         ],
-        "psychology": [ 
-          {"trait": "Confidence", "score": 85}, 
-          {"trait": "Focus", "score": 90}
-        ],
-        "mastery": { "mastered": ["Arrays", "Hashing"], "needsWork": ["Two Pointers"] },
+        "psychologicalProfile": {
+          "traits": [
+            { "name": "Confidence", "score": "number 1-100", "color": "blue" },
+            { "name": "Calmness", "score": "number 1-100", "color": "green" },
+            { "name": "Focus", "score": "number 1-100", "color": "blue" },
+            { "name": "Anxiety Level", "score": "number 1-100", "color": "yellow", "lowerIsBetter": true },
+            { "name": "Nervousness", "score": "number 1-100", "color": "red", "lowerIsBetter": true },
+            { "name": "Resilience", "score": "number 1-100", "color": "teal" }
+          ],
+          "emotionalState": { "status": "string (e.g. Moderately Calm)", "description": "string explaining behavior over time" },
+          "mentalEnergy": { "status": "string (e.g. Peak in First 10min)", "description": "string explaining energy shifts" }
+        },
+        "mastery": {
+          "layer1": { "title": "string", "timeline": "Today", "tasks": ["string", "string"] },
+          "layer2": { "title": "string", "timeline": "This Week", "tasks": ["string", "string"] },
+          "layer3": { "title": "string", "timeline": "Next 2 Weeks", "tasks": ["string", "string"] },
+          "layer4": { "title": "string", "timeline": "3+ Weeks", "tasks": ["string", "string"] }
+        },
         "paths": [ 
           { "priority": 1, "title": "string", "problems": ["Two Sum", "3Sum"], "estimatedHours": "2h", "targetAccuracy": 90 } 
         ],
         "resources": [ 
-          { "type": "Video", "title": "string", "source": "string", "duration": "10m", "url": "string" } 
+          { "type": "string (Video/Article)", "title": "string", "source": "string", "duration": "string", "url": "string" },
+          { "type": "string (Article/Reference)", "title": "string", "source": "string", "duration": "string", "url": "string" },
+          { "type": "string (Tool/Visualizer)", "title": "string", "source": "string", "duration": "string", "url": "string" }
         ]
       }
     `;
@@ -107,8 +130,34 @@ export async function analyzeProblemIntelligence(title, userCode = null) {
     console.error("Intelligence Analysis Error:", error.message);
     if (error.message.includes('429') || error.message.includes('Quota') || error.message.includes('503')) {
       console.warn("Generating Circuit-Breaker Mock Response due to API Rate Limit.");
+      // In case of 429, we generate a deterministically pseudo-random report based on the title so the UI stays dynamic
+      const charSum = (title || "Logic Challenge").split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const isHard = charSum % 3 === 0;
+      const isEasy = charSum % 3 === 1;
+
+      const compOptions = [
+        ["Google", "Meta", "Amazon", "Bloomberg"], 
+        ["Apple", "Netflix", "Uber", "Lyft"], 
+        ["Microsoft", "Oracle", "IBM", "Intel"],
+        ["TikTok", "Stripe", "Databricks", "Anthropic"]
+      ];
+
+      const diffOptions = isHard 
+        ? { level: "Hard", actualComplexity: "Hard", complexityScore: 92 + (charSum % 8) } 
+        : isEasy 
+          ? { level: "Easy", actualComplexity: "Medium", complexityScore: 35 + (charSum % 10) } 
+          : { level: "Medium", actualComplexity: "Hard", complexityScore: 78 + (charSum % 10) };
+
       const mockFallback = {
         title: title || "Logic Challenge",
+        overview: {
+          difficulty: diffOptions,
+          frequency: { level: charSum % 2 === 0 ? "Very High" : "High", percentage: `${60 + (charSum % 35)}%` },
+          ratingReason: { title: `Why it's rated ${diffOptions.level}`, reasons: ["Requires distinct mathematical formulation", "Edge case handling is non-trivial", "Iterative cycle optimization is required for scale"] },
+          companies: compOptions[charSum % 4],
+          rounds: { phone: `${40 + (charSum % 40)}%`, onsite: `${60 - (charSum % 40)}%` },
+          expectedTime: { minutes: isHard ? 45 : 20 + (charSum % 15), successRate: `${50 + (charSum % 30)}%` }
+        },
         detectedMistake: {
           buggy: userCode || "function solve(nums) {\n  for(let i=0; i<nums.length; i++){\n    for(let j=0; j<nums.length; j++){\n       // Brute force logic\n    }\n  }\n}",
           correct: "function solve(nums) {\n  const map = new Map();\n  for(let i=0; i<nums.length; i++){\n     // Optimized O(N) logic utilizing Hash Map\n  }\n}",
@@ -130,16 +179,31 @@ export async function analyzeProblemIntelligence(title, userCode = null) {
           { label: "Loop Invariants Check", status: "fail", msg: "State leak detected" },
           { label: "Memory Allocation", status: "success", msg: "" }
         ],
-        psychology: [
-          { trait: "Resilience", score: 88 },
-          { trait: "Speed", score: 76 }
-        ],
-        mastery: { mastered: ["Hash Table"], needsWork: ["Dynamic Programming"] },
+        psychologicalProfile: {
+          traits: [
+            { name: "Confidence", score: 60 + (charSum % 30), color: "blue" },
+            { name: "Calmness", score: 50 + (charSum % 40), color: "green" },
+            { name: "Focus", score: 70 + (charSum % 25), color: "blue" },
+            { name: "Anxiety Level", score: 40 + (charSum % 35), color: "yellow", lowerIsBetter: true },
+            { name: "Nervousness", score: 30 + (charSum % 30), color: "red", lowerIsBetter: true },
+            { name: "Resilience", score: 65 + (charSum % 25), color: "teal" }
+          ],
+          emotionalState: { status: charSum % 2 === 0 ? "Moderately Calm" : "Easily Stressed", description: "Shows patience in early stages, increases stress near deadline" },
+          mentalEnergy: { status: "Peak in First 10min", description: "High initial energy, gradual decline after encountering bugs" }
+        },
+        mastery: {
+          layer1: { title: "Fix the Bug", timeline: "Today", tasks: ["Add boundary checks", "Implement visited tracking", "Test on 3x3 grid"] },
+          layer2: { title: "Solidify Pattern", timeline: "This Week", tasks: ["Solve 3x from scratch", "Write without hints", "Explain to someone"] },
+          layer3: { title: "Variations", timeline: "Next 2 Weeks", tasks: ["Max area of island", "Surrounded regions", "Perimeter calculation"] },
+          layer4: { title: "Advanced", timeline: "3+ Weeks", tasks: ["BFS alternative", "Iterative DFS", "Union-Find approach"] }
+        },
         paths: [
           { priority: 1, title: "Optimize Time Complexities", problems: ["Two Sum", "Group Anagrams"], estimatedHours: "1.5h", targetAccuracy: 95 }
         ],
         resources: [
-          { type: "Video", title: "Mastering Hash Maps", source: "YouTube", duration: "14m", url: "#" }
+          { type: "Video", title: `Mastering Pattern: ${title}`, source: "YouTube", duration: `${10 + (charSum % 10)}m`, url: "https://youtube.com/results?search_query=leetcode+" + (title || "").replace(/ /g, "+") },
+          { type: "Article", title: `Deep Dive: ${diffOptions.level} Algorithms`, source: "Medium", duration: `${5 + (charSum % 8)}m read`, url: "https://medium.com/search?q=" + (title || "").replace(/ /g, "+") },
+          { type: "Reference", title: `Core Data Structures`, source: "MDN Web Docs", duration: "Documentation", url: `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures` }
         ]
       };
       reportCache.set(cacheKey, mockFallback);

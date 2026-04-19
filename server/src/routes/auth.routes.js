@@ -14,30 +14,57 @@ const COOKIE_OPTIONS = {
 }
 
 // Google OAuth
-router.get('/google',
-  passport.authenticate('google', { scope: ['profile', 'email'], session: false })
-)
+router.get('/google', (req, res, next) => {
+  const origin = req.query.origin || req.headers.referer || process.env.CLIENT_URL
+  console.log('--- GOOGLE AUTH START ---')
+  console.log('Detected Origin:', origin)
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'], 
+    session: false,
+    state: Buffer.from(origin).toString('base64')
+  })(req, res, next)
+})
+
 router.get('/google/callback',
   passport.authenticate('google', { session: false }),
   (req, res) => {
+    const stateOrigin = req.query.state ? Buffer.from(req.query.state, 'base64').toString() : null
+    const finalOrigin = stateOrigin || process.env.CLIENT_URL
+    console.log('--- GOOGLE CALLBACK ---')
+    console.log('State Origin:', stateOrigin)
+    console.log('Final Redirect:', `${finalOrigin}/auth/callback`)
+    
     const access  = signAccessToken(req.user._id.toString())
     const refresh = signRefreshToken(req.user._id.toString())
     res.cookie('refresh_token', refresh, COOKIE_OPTIONS)
-    res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${access}`)
+    res.redirect(`${finalOrigin}/auth/callback?token=${access}`)
   }
 )
 
 // GitHub OAuth
-router.get('/github',
-  passport.authenticate('github', { scope: ['user:email'], session: false })
-)
+router.get('/github', (req, res, next) => {
+  const origin = req.query.origin || req.headers.referer || process.env.CLIENT_URL
+  console.log('--- GITHUB AUTH START ---')
+  console.log('Detected Origin:', origin)
+  passport.authenticate('github', { 
+    scope: ['user:email'], 
+    session: false,
+    state: Buffer.from(origin).toString('base64')
+  })(req, res, next)
+})
+
 router.get('/github/callback',
   passport.authenticate('github', { session: false }),
   (req, res) => {
+    const stateOrigin = req.query.state ? Buffer.from(req.query.state, 'base64').toString() : null
+    const finalOrigin = stateOrigin || process.env.CLIENT_URL
+    console.log('--- GITHUB CALLBACK ---')
+    console.log('State Origin:', stateOrigin)
+    
     const access  = signAccessToken(req.user._id.toString())
     const refresh = signRefreshToken(req.user._id.toString())
     res.cookie('refresh_token', refresh, COOKIE_OPTIONS)
-    res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${access}`)
+    res.redirect(`${finalOrigin}/auth/callback?token=${access}`)
   }
 )
 

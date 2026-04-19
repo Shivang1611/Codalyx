@@ -54,7 +54,7 @@ export default function Login() {
           <Code className="text-white" size={24} />
         </div>
         <span className="font-['Space_Grotesk'] text-2xl font-bold tracking-tight text-[var(--text-primary)]">
-          ECHOES
+          Codalyx
         </span>
       </div>
 

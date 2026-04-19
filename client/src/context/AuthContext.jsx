@@ -67,7 +67,8 @@ export function AuthProvider({ children }) {
       target = envUrl.replace(/\/api$/, '')
     }
     
-    window.location.href = `${target}/api/auth/google`
+    const origin = window.location.origin
+    window.location.href = `${target}/api/auth/google?origin=${origin}`
   }
 
   function loginWithGitHub() {
@@ -79,7 +80,8 @@ export function AuthProvider({ children }) {
       target = envUrl.replace(/\/api$/, '')
     }
     
-    window.location.href = `${target}/api/auth/github`
+    const origin = window.location.origin
+    window.location.href = `${target}/api/auth/github?origin=${origin}`
   }
 
   async function logout() {

@@ -75,12 +75,17 @@ export default function RevisionCalendar({ calendar, profileId, onUpdate }) {
                 ${isToday && !activity?.completed ? 'border-2 border-[var(--cyan)]' : ''}
               `}
             >
-              <span className="relative z-10">{format(day, 'd')}</span>
+              <span className="relative z-10 text-[11px] font-bold">{format(day, 'd')}</span>
               {intensity > 0 && (
-                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-xl pointer-events-none" />
+                <>
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-xl pointer-events-none" />
+                  <div className="absolute bottom-1 right-1 lg:bottom-1.5 lg:right-1.5 text-[8px] font-black text-white/90">
+                    {intensity} Q
+                  </div>
+                </>
               )}
               {isToday && (
-                <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[var(--cyan)] ring-2 ring-[var(--bg-card)]" />
+                <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[var(--cyan)] ring-2 ring-[var(--bg-card)] shadow-sm shadow-[var(--cyan)]" />
               )}
             </motion.div>
           )
